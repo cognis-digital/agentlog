@@ -37,3 +37,4 @@
 2025-12-15T17:05:55  feat: do or do not, there is no try/except
 2026-04-07T12:22:02  perf: speed. I am speed.
 2024-06-08T11:23:13  docs(output): add a fast path for the common case
+2024-07-02T18:40:20  style(scoring): short-circuit on first critical

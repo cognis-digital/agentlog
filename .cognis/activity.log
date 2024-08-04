@@ -39,3 +39,4 @@
 2024-06-08T11:23:13  docs(output): add a fast path for the common case
 2024-07-02T18:40:20  style(scoring): short-circuit on first critical
 2024-07-09T13:57:27  style: formatting (we chose violence on tabs vs spaces)
+2024-08-04T08:14:34  test: add edge case

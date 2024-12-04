@@ -46,3 +46,4 @@
 2024-10-07T12:22:02  docs(scan): pin the test dependencies
 2024-11-02T19:39:09  refactor(scoring): handle empty and malformed input
 2024-11-26T14:56:16  perf(fixtures): support stdin as a source
+2024-12-04T09:13:23  build(tests): trim whitespace in parsed fields

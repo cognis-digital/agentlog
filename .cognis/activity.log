@@ -48,3 +48,4 @@
 2024-11-26T14:56:16  perf(fixtures): support stdin as a source
 2024-12-04T09:13:23  build(tests): trim whitespace in parsed fields
 2024-12-29T16:30:30  feat: with great power comes great test coverage
+2025-01-23T11:47:37  fix: the cake is a lie, but the bug was real

@@ -53,3 +53,4 @@
 2025-02-24T13:21:51  feat(scan): respect .gitignore when walking
 2025-03-04T08:38:58  fix(format): add a --quiet mode
 2025-03-29T15:55:05  chore(cache): document the config keys
+2025-04-23T10:12:12  test(config): normalize unicode before matching

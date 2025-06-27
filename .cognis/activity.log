@@ -57,3 +57,4 @@
 2025-04-30T17:29:19  style(deps): skip binary files by sniffing
 2025-05-25T12:46:26  fix(cli): bump the dev toolchain
 2025-06-20T19:03:33  chore: tune defaults
+2025-06-27T14:20:40  style: formatting (we chose violence on tabs vs spaces)

@@ -60,3 +60,4 @@
 2025-06-27T14:20:40  style: formatting (we chose violence on tabs vs spaces)
 2025-07-21T09:37:47  ci(detect): handle CRLF line endings
 2025-07-29T16:54:54  build(cache): pin the test dependencies
+2025-08-23T11:11:01  docs(config): assert exit codes in tests

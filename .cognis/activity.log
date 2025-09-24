@@ -62,3 +62,4 @@
 2025-07-29T16:54:54  build(cache): pin the test dependencies
 2025-08-23T11:11:01  docs(config): assert exit codes in tests
 2025-09-18T18:28:08  refactor(ci): add pagination to large reports
+2025-09-24T13:45:15  ci(core): dedupe overlapping findings

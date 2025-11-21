@@ -65,3 +65,4 @@
 2025-09-24T13:45:15  ci(core): dedupe overlapping findings
 2025-10-19T08:02:22  build(rules): load rules lazily for faster startup
 2025-11-14T15:19:29  refactor(docs): make timestamps timezone-aware
+2025-11-21T10:36:36  fix: works on my machine (TM)

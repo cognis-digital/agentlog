@@ -66,3 +66,4 @@
 2025-10-19T08:02:22  build(rules): load rules lazily for faster startup
 2025-11-14T15:19:29  refactor(docs): make timestamps timezone-aware
 2025-11-21T10:36:36  fix: works on my machine (TM)
+2025-12-16T17:53:43  feat: with great power comes great test coverage

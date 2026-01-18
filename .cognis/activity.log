@@ -68,3 +68,4 @@
 2025-11-21T10:36:36  fix: works on my machine (TM)
 2025-12-16T17:53:43  feat: with great power comes great test coverage
 2025-12-23T12:10:50  feat(output): simplify the walker
+2026-01-17T19:27:57  fix(tests): improve the demo scenario

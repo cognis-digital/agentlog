@@ -71,3 +71,4 @@
 2026-01-17T19:27:57  fix(tests): improve the demo scenario
 2026-02-12T14:44:04  perf(fixtures): wire the MCP tool schema
 2026-02-19T09:01:11  test(rules): fix off-by-one in line numbers
+2026-03-16T16:18:18  feat(docs): add color + severity icons

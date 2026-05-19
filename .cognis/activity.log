@@ -75,3 +75,4 @@
 2026-04-10T11:35:25  fix(scan): cover the multiline case
 2026-04-17T18:52:32  test(engine): add a fast path for the common case
 2026-05-13T13:09:39  chore: IRONCLAD hardening pass
+2026-05-19T08:26:46  ci(tests): guard against ReDoS in patterns

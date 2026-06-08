@@ -1,38 +1,11 @@
-"""AGENTLOG — Agentic workflow replay & audit over OTel GenAI spans.
-
-Ingests OpenTelemetry GenAI-semantic-convention spans (the agent / LLM /
-tool calls an autonomous workflow emits), reconstructs the causal execution
-tree, replays it deterministically, and audits it for security, cost, and
-correctness findings.
-
-Standard library only, zero install.
-"""
-
-from .core import (
-    Span,
-    Trace,
-    Finding,
-    AuditReport,
-    load_spans,
-    build_traces,
-    replay_trace,
-    audit_trace,
-    summarize,
-)
-
-TOOL_NAME = "agentlog"
-TOOL_VERSION = "1.0.0"
-
-__all__ = [
-    "Span",
-    "Trace",
-    "Finding",
-    "AuditReport",
-    "load_spans",
-    "build_traces",
-    "replay_trace",
-    "audit_trace",
-    "summarize",
-    "TOOL_NAME",
-    "TOOL_VERSION",
-]
+"""agentlog — part of the Cognis Neural Suite."""
+try:  # re-export the tool's public API + identity from core
+    from agentlog.core import *  # noqa: F401,F403
+except Exception:  # pragma: no cover
+    pass
+try:
+    from agentlog.core import TOOL_NAME, TOOL_VERSION
+except Exception:  # pragma: no cover
+    TOOL_NAME = "agentlog"
+    TOOL_VERSION = "0.1.0"
+__version__ = TOOL_VERSION

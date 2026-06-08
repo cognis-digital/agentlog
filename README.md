@@ -36,7 +36,11 @@ Agentic workflow replay & audit with OTel GenAI semantic conventions — without
 <a name="features"></a>
 ## Features
 
-- ✅ Scan
+- ✅ Load Spans
+- ✅ Build Traces
+- ✅ Replay Trace
+- ✅ Audit Trace
+- ✅ Summarize
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
 - ✅ Ports in Python, JavaScript, Go, and Rust (`ports/`)
 

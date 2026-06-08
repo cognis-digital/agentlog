@@ -1,11 +1,38 @@
-"""
-AGENTLOG — Agentic workflow replay & audit with OTel GenAI compatibility
-Part of the Cognis Neural Suite by Cognis Digital.
-https://cognis.digital · MIT License
-"""
-from agentlog.core import scan, TOOL_NAME, TOOL_VERSION
+"""AGENTLOG — Agentic workflow replay & audit over OTel GenAI spans.
 
-__version__ = TOOL_VERSION
-__author__ = "Cognis Digital"
-__license__ = "MIT"
-__all__ = ["scan", "TOOL_NAME", "TOOL_VERSION", "__version__"]
+Ingests OpenTelemetry GenAI-semantic-convention spans (the agent / LLM /
+tool calls an autonomous workflow emits), reconstructs the causal execution
+tree, replays it deterministically, and audits it for security, cost, and
+correctness findings.
+
+Standard library only, zero install.
+"""
+
+from .core import (
+    Span,
+    Trace,
+    Finding,
+    AuditReport,
+    load_spans,
+    build_traces,
+    replay_trace,
+    audit_trace,
+    summarize,
+)
+
+TOOL_NAME = "agentlog"
+TOOL_VERSION = "1.0.0"
+
+__all__ = [
+    "Span",
+    "Trace",
+    "Finding",
+    "AuditReport",
+    "load_spans",
+    "build_traces",
+    "replay_trace",
+    "audit_trace",
+    "summarize",
+    "TOOL_NAME",
+    "TOOL_VERSION",
+]

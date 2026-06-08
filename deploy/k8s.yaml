@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: agentlog, labels: { app: agentlog } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: agentlog } }
+  template:
+    metadata: { labels: { app: agentlog } }
+    spec:
+      containers:
+        - name: agentlog
+          image: ghcr.io/cognis-digital/agentlog:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: agentlog }
+spec:
+  selector: { app: agentlog }
+  ports: [{ port: 80, targetPort: 8000 }]

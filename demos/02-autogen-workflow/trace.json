@@ -1,0 +1,35 @@
+[
+  {
+    "step": 1,
+    "action": "llm_call",
+    "trace_id": "xyz-001",
+    "auth_checked": true,
+    "contains_pii": false,
+    "agent": "PlannerAgent"
+  },
+  {
+    "step": 2,
+    "action": "agent_handoff",
+    "trace_id": "xyz-001",
+    "auth_checked": true,
+    "contains_pii": false,
+    "from": "PlannerAgent",
+    "to": "CoderAgent"
+  },
+  {
+    "step": 3,
+    "action": "tool_call",
+    "tool": "code.write",
+    "trace_id": "xyz-001",
+    "auth_checked": true,
+    "contains_pii": false
+  },
+  {
+    "step": 4,
+    "action": "tool_call",
+    "tool": "shell.exec",
+    "trace_id": "xyz-001",
+    "auth_checked": true,
+    "contains_pii": false
+  }
+]

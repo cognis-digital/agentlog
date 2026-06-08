@@ -1,0 +1,32 @@
+[
+  {
+    "step": 1,
+    "action": "llm_call",
+    "trace_id": "abc-123",
+    "auth_checked": true,
+    "contains_pii": false
+  },
+  {
+    "step": 2,
+    "action": "tool_call",
+    "tool": "fs.read",
+    "trace_id": "",
+    "auth_checked": false,
+    "contains_pii": true
+  },
+  {
+    "step": 3,
+    "action": "llm_call",
+    "trace_id": "abc-125",
+    "auth_checked": true,
+    "contains_pii": false
+  },
+  {
+    "step": 4,
+    "action": "tool_call",
+    "tool": "shell.exec",
+    "trace_id": "abc-126",
+    "auth_checked": false,
+    "contains_pii": false
+  }
+]

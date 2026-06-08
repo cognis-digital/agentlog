@@ -1,0 +1,25 @@
+[
+  {
+    "step": 1,
+    "action": "user_input",
+    "trace_id": "inc-901",
+    "auth_checked": true,
+    "contains_pii": true,
+    "text": "My SSN is 123-45-6789"
+  },
+  {
+    "step": 2,
+    "action": "llm_call",
+    "trace_id": "inc-901",
+    "auth_checked": true,
+    "contains_pii": true
+  },
+  {
+    "step": 3,
+    "action": "tool_call",
+    "tool": "email.send",
+    "trace_id": "inc-901",
+    "auth_checked": true,
+    "contains_pii": true
+  }
+]

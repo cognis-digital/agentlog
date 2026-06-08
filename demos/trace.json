@@ -1,0 +1,17 @@
+[
+  {
+    "step": 1,
+    "action": "tool_call",
+    "tool": "fs.read",
+    "trace_id": "",
+    "auth_checked": false,
+    "contains_pii": true
+  },
+  {
+    "step": 2,
+    "action": "llm_call",
+    "trace_id": "abc",
+    "auth_checked": true,
+    "contains_pii": false
+  }
+]

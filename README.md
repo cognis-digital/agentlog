@@ -19,7 +19,7 @@ Security and intelligence teams need agentic workflow replay & audit with OTel G
 ## Install
 
 ```bash
-pip install cognis-agentlog
+pip install "git+https://github.com/cognis-digital/agentlog.git"
 # or, from this repo:
 pip install -e ".[dev]"
 ```

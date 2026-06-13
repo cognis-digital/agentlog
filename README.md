@@ -12,9 +12,51 @@
 
 *AI Security & Governance — securing LLMs, agents, and the MCP supply chain.*
 
+<!-- cognis:layman:start -->
+## What is this?
+
+agentlog records the step-by-step actions taken by an AI agent—every model call, tool use, and decision—and lets you replay or audit them later. Point it at a log file and it shows you what happened in plain order, flags potential security problems (like leaked passwords or suspicious instructions hidden in tool responses), and reports how many tokens and model calls were used. It is aimed at developers and security teams who run AI agents in production and need a fast, scriptable way to investigate incidents or catch misuse before it causes harm.
+<!-- cognis:layman:end -->
+
 ## Why
 
 Security and intelligence teams need agentic workflow replay & audit with OTel GenAI semantic conventions without standing up heavyweight infrastructure. `agentlog` is single-purpose, scriptable, CI-friendly, and self-hostable: point it at a target, get prioritized findings in the format your workflow already speaks (table, JSON, SARIF, HTML), and wire it into agents over MCP when you want it autonomous.
+
+<!-- cognis:install:start -->
+## Install
+
+`agentlog` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/agentlog/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/agentlog/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/agentlog.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/agentlog.git"  # uv
+pip install "git+https://github.com/cognis-digital/agentlog.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/agentlog.git
+cd agentlog && pip install .
+```
+
+Then run:
+```sh
+agentlog --help
+```
+<!-- cognis:install:end -->
 
 ## Install
 

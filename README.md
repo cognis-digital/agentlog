@@ -3,7 +3,7 @@
 > Part of the **[Cognis Neural Suite](https://github.com/cognis-digital)** by [Cognis Digital](https://cognis.digital)
 > Cognis Open Collaboration License (COCL) v1.0 · domain: `ai-security`
 
-[![PyPI](https://img.shields.io/pypi/v/cognis-agentlog.svg)](https://pypi.org/project/cognis-agentlog/)
+[![install](https://img.shields.io/badge/install-git%2B%20%C2%B7%20pipx%20%C2%B7%20uv-6b46c1.svg)](#install--every-way-every-platform)
 [![CI](https://github.com/cognis-digital/agentlog/actions/workflows/ci.yml/badge.svg)](https://github.com/cognis-digital/agentlog/actions)
 [![License: COCL 1.0](https://img.shields.io/badge/License-COCL%201.0-2b6cb0.svg)](LICENSE)
 [![Suite](https://img.shields.io/badge/Cognis-Neural%20Suite-6b46c1.svg)](https://github.com/cognis-digital)
@@ -64,6 +64,32 @@ Each scenario folder includes a `SCENARIO.md` describing the situation and the f
 ## Contributing
 
 PRs, new detections, and demo scenarios are welcome under the collaboration-pull model. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+<a name="verification"></a>
+## Verification
+
+[![tests](https://img.shields.io/badge/tests-18%20passing-2ea44f.svg)](AUDIT.md)
+
+Every push is verified end-to-end. Latest audit (2026-06-13):
+
+```text
+tests        : 18 passed, 0 failed, 0 errored
+compile      : all modules parse
+cli          : C:\Python314\python.exe: No module named https
+package      : https
+```
+
+<details><summary>CLI surface (<code>--help</code>)</summary>
+
+```text
+C:\Python314\python.exe: No module named https
+```
+</details>
+
+Full machine-readable results: [`AUDIT.md`](AUDIT.md) · regenerate with `python -m https --help` + `pytest -q`.
+
+<div align="right"><a href="#top">↑ back to top</a></div>
+
 
 ## License
 

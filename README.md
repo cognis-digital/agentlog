@@ -12,6 +12,32 @@
 
 *AI Security & Governance — securing LLMs, agents, and the MCP supply chain.*
 
+## Usage — step by step
+
+1. **Install** the tool:
+   ```bash
+   pip install cognis-agentlog
+   ```
+2. **Replay an agent run** from a file of OTel GenAI spans (JSON or JSONL) to reconstruct the execution tree:
+   ```bash
+   agentlog replay demos/trace.jsonl
+   ```
+   Pass `-` instead of a path to read spans from stdin.
+3. **Audit the run** for security, cost, and correctness issues. `--max-tokens` sets the budget that flags over-spend:
+   ```bash
+   agentlog audit demos/trace.jsonl --max-tokens 100000
+   ```
+4. **Read the output** as machine-readable JSON (the global `--format` flag precedes the subcommand), or get a per-trace rollup:
+   ```bash
+   agentlog --format json audit demos/trace.jsonl
+   agentlog summary demos/trace.jsonl
+   ```
+5. **Automate in CI** — export your agent's OTel spans, then audit them on every run:
+   ```yaml
+   - run: pip install cognis-agentlog
+   - run: agentlog --format json audit traces/run.jsonl > agentlog.json
+   ```
+
 ## Why
 
 Security and intelligence teams need agentic workflow replay & audit with OTel GenAI semantic conventions without standing up heavyweight infrastructure. `agentlog` is single-purpose, scriptable, CI-friendly, and self-hostable: point it at a target, get prioritized findings in the format your workflow already speaks (table, JSON, SARIF, HTML), and wire it into agents over MCP when you want it autonomous.

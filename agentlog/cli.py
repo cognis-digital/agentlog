@@ -76,6 +76,9 @@ def _cmd_replay(args) -> int:
 
 
 def _cmd_audit(args) -> int:
+    if args.max_tokens <= 0:
+        print("error: --max-tokens must be a positive integer", file=sys.stderr)
+        return 2
     traces = build_traces(load_spans(_read(args.file)))
     reports = [audit_trace(t, max_tokens=args.max_tokens) for t in traces]
     failing = any(r.exit_failing() for r in reports)
@@ -139,9 +142,21 @@ def main(argv: Optional[List[str]] = None) -> int:
     except FileNotFoundError as e:
         print(f"error: file not found: {e.filename}", file=sys.stderr)
         return 2
+    except IsADirectoryError as e:
+        print(f"error: path is a directory, not a file: {e.filename}", file=sys.stderr)
+        return 2
+    except PermissionError as e:
+        print(f"error: permission denied: {e.filename}", file=sys.stderr)
+        return 2
+    except OSError as e:
+        print(f"error: cannot read file: {e}", file=sys.stderr)
+        return 2
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
+    except KeyboardInterrupt:
+        print("interrupted", file=sys.stderr)
+        return 130
 
 
 if __name__ == "__main__":

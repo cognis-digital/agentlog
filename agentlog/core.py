@@ -37,7 +37,8 @@ _SECRET_PATTERNS: List[Tuple[str, "re.Pattern[str]"]] = [
     ("aws_access_key", re.compile(r"AKIA[0-9A-Z]{16}")),
     ("private_key", re.compile(r"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----")),
     ("bearer_token", re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{20,}")),
-    ("api_key_assign", re.compile(r"(?i)(?:api[_-]?key|secret|password)\s*[=:]\s*[A-Za-z0-9._\-]{8,}")),
+    ("api_key_assign", re.compile(
+        r"(?i)(?:api[_-]?key|secret|password)\s*[=:]\s*[A-Za-z0-9._\-]{8,}")),
     ("email", re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")),
 ]
 
@@ -197,12 +198,17 @@ def _coerce_span(obj: Dict[str, Any]) -> Span:
         span_id=str(obj.get("span_id") or obj.get("spanId") or obj.get("id") or ""),
         name=str(obj.get("name", "")),
         trace_id=str(obj.get("trace_id") or obj.get("traceId") or "default"),
-        parent_span_id=(str(obj["parent_span_id"]) if obj.get("parent_span_id")
-                        else (str(obj["parentSpanId"]) if obj.get("parentSpanId") else None)),
+        parent_span_id=(
+            str(obj["parent_span_id"]) if obj.get("parent_span_id")
+            else (str(obj["parentSpanId"]) if obj.get("parentSpanId") else None)
+        ),
         start_ns=_as_int(obj.get("start_ns") or obj.get("startTimeUnixNano") or 0),
         end_ns=_as_int(obj.get("end_ns") or obj.get("endTimeUnixNano") or 0),
-        status=str((obj.get("status") or {}).get("code")
-                   if isinstance(obj.get("status"), dict) else obj.get("status", "UNSET")),
+        status=str(
+            (obj.get("status") or {}).get("code")
+            if isinstance(obj.get("status"), dict)
+            else obj.get("status", "UNSET")
+        ),
         attributes=attrs,
     )
 
@@ -228,11 +234,22 @@ def load_spans(text: str) -> List[Span]:
                 objs = [doc]
     except json.JSONDecodeError:
         # Fall back to JSONL.
-        for line in text.splitlines():
+        for lineno, line in enumerate(text.splitlines(), 1):
             line = line.strip()
             if not line:
                 continue
-            objs.append(json.loads(line))
+            try:
+                parsed = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"invalid JSON on line {lineno}: {exc}"
+                ) from exc
+            if not isinstance(parsed, dict):
+                raise ValueError(
+                    f"expected a JSON object on line {lineno}, "
+                    f"got {type(parsed).__name__}"
+                )
+            objs.append(parsed)
 
     if not objs:
         raise ValueError("no span objects found in input")
@@ -325,7 +342,10 @@ def audit_trace(trace: Trace, max_tokens: int = 100_000) -> AuditReport:
             tool_calls += 1
         if op in ("chat", "text_completion", "generate_content"):
             llm_calls += 1
-        m = s.attributes.get("gen_ai.response.model") or s.attributes.get("gen_ai.request.model")
+        m = (
+            s.attributes.get("gen_ai.response.model")
+            or s.attributes.get("gen_ai.request.model")
+        )
         if m:
             models[str(m)] = models.get(str(m), 0) + 1
 
@@ -336,8 +356,10 @@ def audit_trace(trace: Trace, max_tokens: int = 100_000) -> AuditReport:
 
         # Orphaned span (parent referenced but absent) breaks audit trail.
         if s.parent_span_id and s.parent_span_id not in by_id:
-            findings.append(Finding("medium", "broken_trace", s.span_id,
-                                    f"parent_span_id '{s.parent_span_id}' not present in trace"))
+            findings.append(Finding(
+                "medium", "broken_trace", s.span_id,
+                f"parent_span_id '{s.parent_span_id}' not present in trace",
+            ))
 
         # Secret / PII leakage through any text attribute.
         leaks = _scan_secrets(s.text_blob())
@@ -354,14 +376,18 @@ def audit_trace(trace: Trace, max_tokens: int = 100_000) -> AuditReport:
         low = s.text_blob().lower()
         for marker in _INJECTION_MARKERS:
             if marker in low:
-                findings.append(Finding("high", "prompt_injection", s.span_id,
-                                        f"prompt-injection marker '{marker}' found in span content"))
+                findings.append(Finding(
+                    "high", "prompt_injection", s.span_id,
+                    f"prompt-injection marker '{marker}' found in span content",
+                ))
                 break
 
     total_tokens = total_in + total_out
     if total_tokens > max_tokens:
-        findings.append(Finding("medium", "token_budget", trace.trace_id,
-                                f"trace used {total_tokens} tokens (budget {max_tokens})"))
+        findings.append(Finding(
+            "medium", "token_budget", trace.trace_id,
+            f"trace used {total_tokens} tokens (budget {max_tokens})",
+        ))
 
     # Runaway loop: an agent re-invoking the same tool many times.
     tool_freq: Dict[str, int] = {}
@@ -370,8 +396,10 @@ def audit_trace(trace: Trace, max_tokens: int = 100_000) -> AuditReport:
             tool_freq[s.tool_name] = tool_freq.get(s.tool_name, 0) + 1
     for name, cnt in tool_freq.items():
         if cnt >= 10:
-            findings.append(Finding("medium", "runaway_loop", trace.trace_id,
-                                    f"tool '{name}' called {cnt} times (possible loop)"))
+            findings.append(Finding(
+                "medium", "runaway_loop", trace.trace_id,
+                f"tool '{name}' called {cnt} times (possible loop)",
+            ))
 
     metrics = {
         "spans": len(trace.spans),

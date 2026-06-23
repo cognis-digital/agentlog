@@ -19,10 +19,40 @@ A span maps to one unit of agent work. parent_span_id links them into a tree.
 
 from __future__ import annotations
 
+import html
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+
+# --------------------------------------------------------------------------
+# Identity
+# --------------------------------------------------------------------------
+
+TOOL_NAME = "agentlog"
+
+
+def _read_version() -> str:
+    """Resolve the tool version from the repo VERSION file, falling back
+    to a sane default so the package never fails to import."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for candidate in (
+        os.path.join(here, os.pardir, "VERSION"),
+        os.path.join(here, "VERSION"),
+    ):
+        try:
+            with open(candidate, "r", encoding="utf-8") as fh:
+                v = fh.read().strip()
+            if v:
+                return v
+        except OSError:
+            continue
+    return "1.2.5"
+
+
+TOOL_VERSION = _read_version()
 
 
 # --------------------------------------------------------------------------
@@ -401,3 +431,197 @@ def summarize(traces: List[Trace]) -> Dict[str, Any]:
             "findings": len(rep.findings),
         })
     return {"traces": out, "trace_count": len(traces)}
+
+
+def scan(target: str, max_tokens: int = 100_000) -> Dict[str, Any]:
+    """Audit a span file (or a directory of ``*.json`` / ``*.jsonl`` span files)
+    and return a single JSON-serializable report.
+
+    This is the entry point the MCP server exposes so Cognis.Studio / Claude
+    Desktop / Cursor agents can call agentlog as a scoped capability. It is
+    fully offline: it only reads local files, never the network.
+    """
+    paths: List[str] = []
+    if os.path.isdir(target):
+        for root, _dirs, files in os.walk(target):
+            for fn in sorted(files):
+                if fn.endswith((".json", ".jsonl")):
+                    paths.append(os.path.join(root, fn))
+    else:
+        paths.append(target)
+
+    all_reports: List[AuditReport] = []
+    errors: List[Dict[str, str]] = []
+    for p in sorted(paths):
+        try:
+            with open(p, "r", encoding="utf-8") as fh:
+                spans = load_spans(fh.read())
+        except (OSError, ValueError) as e:
+            errors.append({"file": p, "error": str(e)})
+            continue
+        for tr in build_traces(spans):
+            all_reports.append(audit_trace(tr, max_tokens=max_tokens))
+
+    failing = any(r.exit_failing() for r in all_reports)
+    return {
+        "tool": TOOL_NAME,
+        "version": TOOL_VERSION,
+        "target": target,
+        "files_scanned": len(paths) - len(errors),
+        "reports": [r.as_dict() for r in all_reports],
+        "findings_total": sum(len(r.findings) for r in all_reports),
+        "failing": failing,
+        "errors": errors,
+    }
+
+
+# --------------------------------------------------------------------------
+# Renderers — SARIF (GitHub code-scanning) and HTML (shareable report)
+# --------------------------------------------------------------------------
+
+# SARIF 2.1.0 only knows error/warning/note. Map agentlog severities onto it.
+_SARIF_LEVEL = {
+    "critical": "error",
+    "high": "error",
+    "medium": "warning",
+    "low": "note",
+    "info": "note",
+}
+
+
+def to_sarif(reports: List[AuditReport]) -> Dict[str, Any]:
+    """Render audit findings as a SARIF 2.1.0 log.
+
+    SARIF drops directly into GitHub code-scanning and IDE problem panes.
+    Each agentlog finding code becomes a SARIF rule; each finding becomes a
+    result whose ``logicalLocation`` is the offending span id.
+    """
+    rule_meta = {
+        "span_error": ("Span ended in an error state", "high"),
+        "broken_trace": ("Span references a parent that is absent", "medium"),
+        "secret_leak": ("Secret or PII exposed in span attributes", "critical"),
+        "dangerous_tool": ("High-blast-radius tool invoked", "high"),
+        "prompt_injection": ("Prompt-injection marker in span content", "high"),
+        "token_budget": ("Trace exceeded its token budget", "medium"),
+        "runaway_loop": ("Tool invoked repeatedly (possible loop)", "medium"),
+    }
+    seen: Dict[str, Dict[str, Any]] = {}
+    results: List[Dict[str, Any]] = []
+    for rep in reports:
+        for f in rep.findings:
+            desc, _ = rule_meta.get(f.code, (f.code, f.severity))
+            if f.code not in seen:
+                seen[f.code] = {
+                    "id": f.code,
+                    "name": f.code,
+                    "shortDescription": {"text": desc},
+                    "defaultConfiguration": {
+                        "level": _SARIF_LEVEL.get(f.severity, "warning")
+                    },
+                }
+            results.append({
+                "ruleId": f.code,
+                "level": _SARIF_LEVEL.get(f.severity, "warning"),
+                "message": {"text": f.message},
+                "properties": {
+                    "severity": f.severity,
+                    "trace_id": rep.trace_id,
+                    "span_id": f.span_id,
+                },
+                "locations": [{
+                    "logicalLocations": [{
+                        "name": f.span_id,
+                        "fullyQualifiedName": f"{rep.trace_id}/{f.span_id}",
+                        "kind": "span",
+                    }]
+                }],
+            })
+    return {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": TOOL_NAME,
+                    "version": TOOL_VERSION,
+                    "informationUri": "https://github.com/cognis-digital/agentlog",
+                    "rules": list(seen.values()),
+                }
+            },
+            "results": results,
+        }],
+    }
+
+
+_SEV_COLOR = {
+    "critical": "#c0392b",
+    "high": "#e67e22",
+    "medium": "#d4a017",
+    "low": "#2980b9",
+    "info": "#7f8c8d",
+}
+
+
+def to_html(reports: List[AuditReport]) -> str:
+    """Render a self-contained, shareable HTML report (no external assets)."""
+    def esc(x: Any) -> str:
+        return html.escape(str(x))
+
+    total_findings = sum(len(r.findings) for r in reports)
+    failing = any(r.exit_failing() for r in reports)
+    rows: List[str] = []
+    for rep in reports:
+        m = rep.metrics
+        rows.append(
+            f"<h2>trace <code>{esc(rep.trace_id)}</code></h2>"
+            f"<p class='metrics'>spans={m['spans']} &middot; llm={m['llm_calls']} "
+            f"&middot; tools={m['tool_calls']} &middot; errors={m['errors']} "
+            f"&middot; tokens={m['total_tokens']} "
+            f"(in {m['input_tokens']} / out {m['output_tokens']})</p>"
+        )
+        if not rep.findings:
+            rows.append("<p class='clean'>No findings.</p>")
+            continue
+        rows.append("<table><thead><tr><th>Severity</th><th>Code</th>"
+                    "<th>Span</th><th>Message</th></tr></thead><tbody>")
+        for f in rep.findings:
+            color = _SEV_COLOR.get(f.severity, "#555")
+            rows.append(
+                f"<tr><td><span class='sev' style='background:{color}'>"
+                f"{esc(f.severity.upper())}</span></td>"
+                f"<td><code>{esc(f.code)}</code></td>"
+                f"<td><code>{esc(f.span_id)}</code></td>"
+                f"<td>{esc(f.message)}</td></tr>"
+            )
+        rows.append("</tbody></table>")
+
+    banner = ("FAIL — critical/high findings present" if failing
+              else "PASS — no blocking findings")
+    banner_color = "#c0392b" if failing else "#27ae60"
+    body = "\n".join(rows)
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{TOOL_NAME} audit report</title>
+<style>
+ body{{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;margin:2rem;color:#1a1a1a}}
+ h1{{margin:0 0 .25rem}} code{{font-family:ui-monospace,monospace}}
+ .banner{{padding:.6rem 1rem;border-radius:6px;color:#fff;font-weight:600;background:{banner_color};display:inline-block}}
+ .metrics{{color:#555}} .clean{{color:#27ae60}}
+ table{{border-collapse:collapse;width:100%;margin:.5rem 0 1.5rem;overflow-x:auto;display:block}}
+ th,td{{text-align:left;padding:.4rem .6rem;border-bottom:1px solid #eee;vertical-align:top}}
+ .sev{{color:#fff;padding:.1rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600}}
+</style></head><body>
+<h1>{TOOL_NAME} &mdash; agent trace audit</h1>
+<p>{len(reports)} trace(s) &middot; {total_findings} finding(s)</p>
+<p class="banner">{esc(banner)}</p>
+{body}
+</body></html>"""
+
+
+__all__ = [
+    "TOOL_NAME", "TOOL_VERSION",
+    "Span", "Trace", "Finding", "AuditReport",
+    "load_spans", "build_traces", "replay_trace",
+    "audit_trace", "summarize", "scan", "to_sarif", "to_html",
+]

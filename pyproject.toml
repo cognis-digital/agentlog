@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cognis-agentlog"
-version = "0.1.1"
+version = "1.2.5"
 description = "Agentic workflow replay & audit with OTel GenAI compatibility"
 authors = [{name = "Cognis Digital", email = "suite@cognis.digital"}]
 license = {text = "LicenseRef-COCL-1.0"}

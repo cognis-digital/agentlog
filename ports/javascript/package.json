@@ -1,9 +1,12 @@
 {
   "name": "@cognis/agentlog",
-  "version": "0.2.0",
-  "description": "JavaScript port of agentlog (Cognis Neural Suite)",
+  "version": "1.2.5",
+  "description": "JavaScript/Node port of agentlog — OTel GenAI span audit (Cognis Neural Suite)",
   "bin": {
     "agentlog": "index.js"
+  },
+  "scripts": {
+    "test": "node test.js"
   },
   "license": "LicenseRef-COCL-1.0",
   "type": "module"

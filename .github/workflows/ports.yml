@@ -1,0 +1,83 @@
+name: ports
+on:
+  push:
+    paths:
+      - "ports/**"
+      - ".github/workflows/ports.yml"
+  pull_request:
+    paths:
+      - "ports/**"
+      - ".github/workflows/ports.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go port (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Vet
+        working-directory: ports/go
+        run: go vet ./...
+      - name: Test
+        working-directory: ports/go
+        run: go test -v ./...
+      - name: Build + smoke run
+        working-directory: ports/go
+        run: |
+          go build -o agentlog-go .
+          ./agentlog-go ../../demos/01-basic/spans.json || true   # exit 1 expected (findings)
+          ./agentlog-go ../../demos/01-basic/spans.json | grep -q '"secret_leak"'
+
+  rust:
+    name: Rust port (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test
+        working-directory: ports/rust
+        run: cargo test --verbose
+      - name: Build + smoke run
+        working-directory: ports/rust
+        run: |
+          cargo build --release
+          ./target/release/agentlog ../../demos/01-basic/spans.json || true
+          ./target/release/agentlog ../../demos/01-basic/spans.json | grep -q '"secret_leak"'
+
+  node:
+    name: JavaScript / Node port (test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Test
+        working-directory: ports/javascript
+        run: node test.js
+      - name: Smoke run
+        working-directory: ports/javascript
+        run: |
+          node index.js ../../demos/01-basic/spans.json || true
+          node index.js ../../demos/01-basic/spans.json | grep -q '"prompt_injection"'
+
+  shell:
+    name: Shell port (test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Test
+        run: sh ports/shell/test.sh
+      - name: Smoke run
+        run: |
+          sh ports/shell/agentlog.sh demos/01-basic/spans.json || true
+          sh ports/shell/agentlog.sh demos/01-basic/spans.json | grep -q '"dangerous_tool"'

@@ -22,6 +22,9 @@ from .core import (
     replay_trace,
     audit_trace,
     summarize,
+    scan,
+    to_sarif,
+    to_html,
 )
 
 
@@ -30,6 +33,17 @@ def _read(path: str) -> str:
         return sys.stdin.read()
     with open(path, "r", encoding="utf-8") as fh:
         return fh.read()
+
+
+def _write_out(args, text: str) -> None:
+    """Write rendered output to --out if given, else stdout."""
+    out = getattr(args, "out", None)
+    if out:
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write(text if text.endswith("\n") else text + "\n")
+        print(f"wrote {out}", file=sys.stderr)
+    else:
+        print(text)
 
 
 def _emit_json(obj) -> None:
@@ -75,15 +89,29 @@ def _cmd_replay(args) -> int:
     return 0
 
 
+_SEV_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
+def _fails_threshold(reports, fail_on: str) -> bool:
+    """True if any finding meets or exceeds the --fail-on severity floor."""
+    floor = _SEV_RANK.get(fail_on, 1)
+    return any(_SEV_RANK.get(f.severity, 9) <= floor
+               for r in reports for f in r.findings)
+
+
 def _cmd_audit(args) -> int:
     traces = build_traces(load_spans(_read(args.file)))
     reports = [audit_trace(t, max_tokens=args.max_tokens) for t in traces]
-    failing = any(r.exit_failing() for r in reports)
+    failing = _fails_threshold(reports, getattr(args, "fail_on", "high"))
     if args.format == "json":
-        _emit_json({
+        _write_out(args, json.dumps({
             "reports": [r.as_dict() for r in reports],
             "failing": failing,
-        })
+        }, indent=2, default=str))
+    elif args.format == "sarif":
+        _write_out(args, json.dumps(to_sarif(reports), indent=2, default=str))
+    elif args.format == "html":
+        _write_out(args, to_html(reports))
     else:
         for r in reports:
             _print_audit_table(r)
@@ -104,6 +132,45 @@ def _cmd_summary(args) -> int:
     return 0
 
 
+def _cmd_scan(args) -> int:
+    """Audit a span file or a directory of span files in one shot."""
+    result = scan(args.target, max_tokens=args.max_tokens)
+    failing = bool(result["failing"])
+    if args.format == "json":
+        _write_out(args, json.dumps(result, indent=2, default=str))
+    elif args.format in ("sarif", "html"):
+        # Re-derive reports for the structured renderers.
+        traces = []
+        import os as _os
+        targets = []
+        if _os.path.isdir(args.target):
+            for root, _d, files in _os.walk(args.target):
+                for fn in sorted(files):
+                    if fn.endswith((".json", ".jsonl")):
+                        targets.append(_os.path.join(root, fn))
+        else:
+            targets.append(args.target)
+        reports = []
+        for p in sorted(targets):
+            try:
+                spans = load_spans(_read(p))
+            except (OSError, ValueError):
+                continue
+            for t in build_traces(spans):
+                reports.append(audit_trace(t, max_tokens=args.max_tokens))
+        if args.format == "sarif":
+            _write_out(args, json.dumps(to_sarif(reports), indent=2, default=str))
+        else:
+            _write_out(args, to_html(reports))
+    else:
+        print(f"scanned {result['files_scanned']} file(s) under {result['target']}")
+        print(f"  findings: {result['findings_total']}  "
+              f"result: {'FAIL' if failing else 'PASS'}")
+        for err in result["errors"]:
+            print(f"  skipped {err['file']}: {err['error']}", file=sys.stderr)
+    return 1 if failing else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog=TOOL_NAME,
@@ -111,8 +178,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--version", action="version",
                    version=f"{TOOL_NAME} {TOOL_VERSION}")
-    p.add_argument("--format", choices=("table", "json"), default="table",
-                   help="output format (default: table)")
+    p.add_argument("--format", choices=("table", "json", "sarif", "html"),
+                   default="table",
+                   help="output format (default: table; sarif/html for audit)")
     sub = p.add_subparsers(dest="command", required=True)
 
     rp = sub.add_parser("replay", help="reconstruct the agent execution tree")
@@ -123,11 +191,26 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("file", help="span file (JSON / JSONL), or '-' for stdin")
     ap.add_argument("--max-tokens", type=int, default=100_000,
                     help="token budget per trace (default: 100000)")
+    ap.add_argument("--fail-on", choices=("critical", "high", "medium", "low", "info"),
+                    default="high",
+                    help="severity floor that makes the run exit non-zero "
+                         "(default: high)")
+    ap.add_argument("--out", default=None,
+                    help="write json/sarif/html output to this file instead of stdout")
     ap.set_defaults(func=_cmd_audit)
 
     sp = sub.add_parser("summary", help="per-trace rollup")
     sp.add_argument("file", help="span file (JSON / JSONL), or '-' for stdin")
     sp.set_defaults(func=_cmd_summary)
+
+    scp = sub.add_parser("scan",
+                         help="audit a span file or a directory of span files")
+    scp.add_argument("target", help="span file or directory of *.json/*.jsonl")
+    scp.add_argument("--max-tokens", type=int, default=100_000,
+                     help="token budget per trace (default: 100000)")
+    scp.add_argument("--out", default=None,
+                     help="write json/sarif/html output to this file instead of stdout")
+    scp.set_defaults(func=_cmd_scan)
     return p
 
 

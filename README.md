@@ -15,6 +15,56 @@ Modern agents call models, invoke tools, and loop — and the only durable recor
 
 ---
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ agentlog-emit --version
+agentlog 1.2.5
+```
+
+```console
+$ agentlog-emit --help
+usage: agentlog [-h] [--version] [--format {table,json,sarif,html}]
+                {replay,audit,summary,scan} ...
+
+Agentic workflow replay & audit over OTel GenAI spans.
+
+positional arguments:
+  {replay,audit,summary,scan}
+    replay              reconstruct the agent execution tree
+    audit               security/cost/correctness audit
+    summary             per-trace rollup
+    scan                audit a span file or a directory of span files
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --format {table,json,sarif,html}
+                        output format (default: table; sarif/html for audit)
+```
+
+> Blocks above are real `agentlog` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"agentlog": {
+"timestamp": "2023-02-16T14:30:00Z",
+"agent_id": "1234567890",
+"platform": "stix"
+}
+}
+
+AgentLog Emitted: 1 finding(s)
+```
+
+<!-- cognis:example:end -->
+
 ## Install
 
 ```bash

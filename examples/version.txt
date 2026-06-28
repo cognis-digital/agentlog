@@ -1,0 +1,3 @@
+$ agentlog-emit --version
+
+agentlog 1.2.5

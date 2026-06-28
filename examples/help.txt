@@ -1,0 +1,19 @@
+$ agentlog-emit --help
+
+usage: agentlog [-h] [--version] [--format {table,json,sarif,html}]
+                {replay,audit,summary,scan} ...
+
+Agentic workflow replay & audit over OTel GenAI spans.
+
+positional arguments:
+  {replay,audit,summary,scan}
+    replay              reconstruct the agent execution tree
+    audit               security/cost/correctness audit
+    summary             per-trace rollup
+    scan                audit a span file or a directory of span files
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --format {table,json,sarif,html}
+                        output format (default: table; sarif/html for audit)

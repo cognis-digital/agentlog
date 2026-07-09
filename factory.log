@@ -1,0 +1,20 @@
+[2026-07-08 21:38:37] === enhance · agentlog · words=120000 loc>=10000 langs=9 push=True ===
+[2026-07-08 21:38:42] phase DOCS — longform 120000-word corpus -> docs/corpus/
+[2026-07-09 06:23:57] phase POLYGLOT — expanding to >= 10000 LOC across 9 languages
+[2026-07-09 06:24:42]   facets: ['otel_semantic_parser', 'workflow_reconstructor', 'replay_executor', 'audit_trail_builder', 'diff_comparator', 'report_generator']
+[2026-07-09 06:26:51]   +polyglot/python/otel_semantic_parser.py  (loc now ~3657)
+[2026-07-09 06:31:44]   +polyglot/go/otel_semantic_parser.go  (loc now ~4064)
+[2026-07-09 06:35:52]   +polyglot/rust/otel_semantic_parser.rs  (loc now ~4238)
+[2026-07-09 06:39:18]   +polyglot/typescript/otel_semantic_parser.ts  (loc now ~4712)
+[2026-07-09 06:42:57]   +polyglot/c/otel_semantic_parser.c  (loc now ~5193)
+[2026-07-09 06:45:27]   +polyglot/cpp/otel_semantic_parser.cpp  (loc now ~5592)
+[2026-07-09 06:48:01]   +polyglot/java/otel_semantic_parser.java  (loc now ~6070)
+[2026-07-09 06:56:22]   +polyglot/ruby/otel_semantic_parser.rb  (loc now ~6487)
+[2026-07-09 07:00:27]   +polyglot/csharp/otel_semantic_parser.cs  (loc now ~6957)
+[2026-07-09 07:04:15]   +polyglot/python/workflow_reconstructor.py  (loc now ~7433)
+[2026-07-09 07:08:11]   +polyglot/go/workflow_reconstructor.go  (loc now ~7916)
+[2026-07-09 07:11:50]   +polyglot/rust/workflow_reconstructor.rs  (loc now ~8378)
+[2026-07-09 07:15:55]   +polyglot/typescript/workflow_reconstructor.ts  (loc now ~8881)
+[2026-07-09 07:18:46]   +polyglot/c/workflow_reconstructor.c  (loc now ~9250)
+[2026-07-09 07:21:21]   +polyglot/cpp/workflow_reconstructor.cpp  (loc now ~9584)
+[2026-07-09 07:24:03]   +polyglot/java/workflow_reconstructor.java  (loc now ~10002)
